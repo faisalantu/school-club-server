@@ -1,22 +1,24 @@
 {
-  "name": "school-project-mern",
+  "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "client": "npm run dev --prefix client",
-    "server": "npm run dev --prefix server"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/faisalantu/school-project.git"
-  },
-  "author": "Faisal Antu",
+  "author": "Faisal Ahmed",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/faisalantu/school-project/issues"
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "config": "^3.3.6",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-validator": "^6.10.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.12.3"
   },
-  "homepage": "https://github.com/faisalantu/school-project#readme",
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
 }
