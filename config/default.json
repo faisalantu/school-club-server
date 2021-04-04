@@ -1,4 +1,4 @@
 {
-  "mongoURI": "",
-  "jwtSecret": ""
+  "mongoURI": "mongodb+srv://faisal:faisalmongodb@cluster0.ekshh.mongodb.net/clubeDB?retryWrites=true&w=majority",
+  "jwtSecret": "QX@kB9d{Y"
 }
