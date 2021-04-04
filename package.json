@@ -1,0 +1,22 @@
+{
+  "name": "school-project-mern",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "client": "npm run dev --prefix client",
+    "server": "npm run dev --prefix server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/faisalantu/school-project.git"
+  },
+  "author": "Faisal Antu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/faisalantu/school-project/issues"
+  },
+  "homepage": "https://github.com/faisalantu/school-project#readme",
+  "devDependencies": {},
+  "dependencies": {}
+}
