@@ -13,28 +13,34 @@ const User = require("../models/User");
 router.post(
   "/",
   [
-    check("name", "Please add name").not().isEmpty(),
+    check("username", "Please add username").not().isEmpty(),
+    check("firstname", "Please add firstname").not().isEmpty(),
+    check("lastname", "Please add lastname").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
     check(
       "password",
       "please enter a password with 6 or more charecters"
     ).isLength({ min: 6 }),
+    check("studentid", "Please include a valid studentid").isNumeric(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.status(400).json({ errors: errors.array() });
     } else {
-      const { name, email, password } = req.body;
+      const { username,firstname,lastname, email, password,studentid } = req.body;
       try {
         let user = await User.findOne({ email });
         if (user) {
           return res.status(400).json({ msg: "User already exist" });
         } else {
           user = new User({
-            name,
+            username,
+            firstname,
+            lastname,
             email,
             password,
+            studentid,
           });
 
           const salt = await bcrypt.genSalt(10);
