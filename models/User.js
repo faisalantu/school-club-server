@@ -26,6 +26,19 @@ const UserSchema = mongoose.Schema({
     type: String,
     require: true,
   },
+  IsAdmin: {
+    type: Boolean,
+    require: true,
+  },
+  IsPrecedent: {
+    type: Boolean,
+    require: true,
+  },
+  clubID: {
+    type: mongoose.Schema.Types.ObjectId,
+    require: true,
+    ref:'ClubList'
+  },
   date: {
     type: Date,
     default: Date.now,
