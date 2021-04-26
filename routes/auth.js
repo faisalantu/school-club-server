@@ -52,6 +52,9 @@ router.post(
       const payload = {
         user: {
           id: user.id,
+          club: user.clubID,
+          IsAdmin:user.IsAdmin,
+          IsPrecedent: user.IsPrecedent
         },
       };
 
@@ -63,7 +66,7 @@ router.post(
         },
         (err, token) => {
           if (err) throw err;
-          else res.json({ token });
+          else res.status(200).json({ token });
         }
       );
     } catch (err) {
