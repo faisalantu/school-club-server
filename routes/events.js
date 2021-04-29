@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Event = require('../models/Event')
 const auth = require("../middleware/auth");
-
 const { check, validationResult } = require("express-validator");
+const { cloudinary } = require('../utils/cloudinary');
 
 // @route   GET api/events
 // @desc    get all events
@@ -38,7 +38,7 @@ router.get("/:id", async (req, res) => {
 // @route   POST api/events
 // @desc    add event
 // @access  Private
-router.post("/", auth,
+router.post("/",
   [
     check("title", "Please add title").not().isEmpty(),
     check("location", "Please add a location").not().isEmpty(),
@@ -47,34 +47,48 @@ router.post("/", auth,
       .not()
       .isEmpty()
       .isNumeric(),
-    check("eventTime", "Please add event time").not().isEmpty(),
+    check("startTime", "Please add event starting time").not().isEmpty(),
+    check("endTime", "Please add event ending time").not().isEmpty(),
+    check("eventDate", "Please add event date").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
     check("contactNumber", "Please include a phone number").not().isEmpty(),
-    check("isPublic", "Please include a phone number").not().isEmpty(),
+    check("imageUrl", "Please include an image").not().isEmpty(),
+    check("eventBody", "Please write someting about the event").not().isEmpty(),
+    check("isPublic", "Please include a phone number").not().isEmpty().isBoolean(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.status(400).json({ errors: errors.array() });
     } else {
-
-      let event = new Event({
-        title: req.body.title,
-        location: req.body.location,
-        tickets: req.body.tickets,
-        fee: req.body.fee,
-        eventTime: req.body.time,
-        email: req.body.email,
-        contactNumber: req.body.contactNumber,
-        isPublic: req.body.isPublic,
-        userId: req.user.id,
-
-      });
-      event = await event.save();
-      if (!event) {
-        res.status(500).send({ success: false , message: 'The event cannot be created'  })
+      try {
+        const fileStr = req.body.data;
+        const uploadResponse = await cloudinary.uploader.upload(fileStr, {
+            upload_preset: 'events',
+        });
+        console.log(uploadResponse);
+        res.json({ msg: 'yaya' });
+      } catch (err) {
+        
       }
-      res.send( { success: true ,message:"Event added "  });
+
+      // let event = new Event({
+      //   title: req.body.title,
+      //   location: req.body.location,
+      //   tickets: req.body.tickets,
+      //   fee: req.body.fee,
+      //   eventTime: req.body.time,
+      //   email: req.body.email,
+      //   contactNumber: req.body.contactNumber,
+      //   isPublic: req.body.isPublic,
+      //   userId: req.user.id,
+
+      // });
+      // event = await event.save();
+      // if (!event) {
+      //   res.status(500).send({ success: false , message: 'The event cannot be created'  })
+      // }
+      // res.send( { success: true ,message:"Event added "  });
     }
   }
 );
