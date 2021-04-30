@@ -8,7 +8,8 @@ app.use(cors());
 //connect database
 connectDB();
 // init middleware
-app.use(express.json({ extended: false }));
+app.use(express.json({ limit: "30mb" }));
+app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
 app.get("/", (req, res) => {
   res.json({
@@ -22,8 +23,6 @@ app.use("/api/posts", require("./routes/posts"));
 app.use("/api/events", require("./routes/events"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/clublist", require("./routes/clubList"));
-
-
 
 const PORT = process.env.PORT || 5000;
 
