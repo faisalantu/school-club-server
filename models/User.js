@@ -3,40 +3,40 @@ const mongoose = require("mongoose");
 const UserSchema = mongoose.Schema({
   username: {
     type: String,
-    require: true,
+    required: true,
   },
   firstname: {
     type: String,
-    require: true,
+    required: true,
   },
   lastname: {
     type: String,
-    require: true,
+    required: true,
   },
   email: {
     type: String,
-    require: true,
+    required: true,
     unique: true,
   },
   password: {
     type: String,
-    require: true,
+    required: true,
   },
   studentid: {
     type: String,
-    require: true,
+    required: true,
   },
   IsAdmin: {
     type: Boolean,
-    require: true,
+    required: true,
   },
   IsPrecedent: {
     type: Boolean,
-    require: true,
+    required: true,
   },
   clubID: {
     type: mongoose.Schema.Types.ObjectId,
-    require: true,
+    required: true,
     ref:'ClubList'
   },
   date: {

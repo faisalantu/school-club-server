@@ -3,41 +3,57 @@ const mongoose = require("mongoose");
 const EventSchema = mongoose.Schema({
   title: {
     type: String,
-    require: true,
+    required: true,
   },
   location: {
     type: String,
-    require: true,
+    required: true,
   },
   tickets: {
     type: Number,
-    require: false,
+    required: false,
   },
   fee: {
     type: Number,
-    require: false,
+    required: false,
   },
-  eventTime: {
+  startTime: {
     type: String,
-    require: false,
+    required: true,
   },
-  email:{
-      type:String,
-      require:true
+  endTime: {
+    type: String,
+    required: true,
   },
-  contactNumber:{
-      type:String,
-      require:true
+  eventDate: {
+    type: Object,
+    required: true,
   },
-  isPublic:{
-    type:Boolean,
-    require:true
+  email: {
+    type: String,
+    required: true,
   },
-  userId:{
-      type: mongoose.Schema.Types.ObjectId,
-      require:true,
-      ref:'User'
+  contactNumber: {
+    type: String,
+    required: true,
   },
+  imageObj: {
+    type: Object,
+    required: true,
+  },
+  eventBody: {
+    type: Object,
+    required: true,
+  },
+  isPublic: {
+    type: Boolean,
+    required: true,
+  },
+/*   userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  }, */
   date: {
     type: Date,
     default: Date.now,
