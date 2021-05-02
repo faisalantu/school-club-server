@@ -36,7 +36,7 @@ router.post(
       try {
         const fileStr = req.body.imageObj;
         const uploadResponse = await cloudinary.uploader.upload(fileStr, {
-          upload_preset: "events",
+          upload_preset: "posts",
         });
         console.log(req.body.eventDate);
         let post = new PostModel({
