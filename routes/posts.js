@@ -48,11 +48,11 @@ router.post(
 
         try {
           post = await post.save();
-          res.send({ success: true, message: "Event added " });
+          res.send({ success: true, message: "post added " });
         } catch (err) {
           res
             .status(500)
-            .send({ success: false, message: "The event cannot be created" });
+            .send({ success: false, message: "post cannot be created" });
         }
       } catch (err) {
         res
