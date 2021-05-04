@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const UserSchema = mongoose.Schema({
-  username: {
-    type: String,
+  imageObj: {
+    type: Object,
     required: true,
   },
   firstname: {
@@ -26,16 +26,29 @@ const UserSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  IsAdmin: {
+  isAdmin: {
     type: Boolean,
     required: true,
   },
-  IsPrecedent: {
+  isPrecedent: {
     type: Boolean,
     required: true,
   },
-  clubID: {
+  depertmentId: {
     type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref:'Depertment'
+  },
+  interested: {   
+    type: Array,
+    required: true,
+  },
+  likes: {
+    type: Array,
+    required: false,
+  },
+  clubId: {
+    type: Array,
     required: true,
     ref:'ClubList'
   },
