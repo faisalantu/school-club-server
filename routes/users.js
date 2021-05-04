@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 
 const { check, validationResult } = require("express-validator");
+const { cloudinary } = require("../utils/cloudinary");
 const User = require("../models/User");
 
 // @route   POST api/users
@@ -12,35 +13,56 @@ const User = require("../models/User");
 // @access  Private
 router.post(
   "/",
-  [
-    check("username", "Please add username").not().isEmpty(),
-    check("firstname", "Please add firstname").not().isEmpty(),
-    check("lastname", "Please add lastname").not().isEmpty(),
-    check("email", "Please include a valid email").isEmail(),
-    check(
-      "password",
-      "please enter a password with 6 or more charecters"
-    ).isLength({ min: 6 }),
-    check("studentid", "Please include a valid studentid").isNumeric(),
+  [check("image", "Please add profile image").not().isEmpty(),
+  check("firstname", "Please add firstname").not().isEmpty(),
+  check("lastname", "Please add lastname").not().isEmpty(),
+  check("email", "Please include a valid email").isEmail(),
+  check(
+    "password", 
+    "please enter a password with 6 or more charecters"
+  ).isLength({ min: 6 }),
+  check("studentid", "Please include a valid studentid").isNumeric(),
+  check("depertmentId", "Please add depertment").not().isEmpty(),
+  check("interested", "Please add intersted field").not().isEmpty(), 
+  check("clubId", "Please add club").not().isEmpty(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.status(400).json({ errors: errors.array() });
     } else {
-      const { username,firstname,lastname, email, password,studentid } = req.body;
+      const {
+        image,
+        firstname,
+        lastname,
+        email,
+        password,
+        studentid,
+        depertmentId,
+        intersted,
+        clubId,
+      } = req.body;
       try {
         let user = await User.findOne({ email });
         if (user) {
           return res.status(400).json({ msg: "User already exist" });
         } else {
+          const imageObj = await cloudinary.uploader.upload(image, {
+            upload_preset: "users",
+          });
+          console.log("[imageObj]",imageObj)
           user = new User({
-            username,
+            imageObj,
             firstname,
             lastname,
             email,
             password,
             studentid,
+            isAdmin : false,
+            isPrecedent : false,
+            depertmentId,
+            intersted,
+            clubId,
           });
 
           const salt = await bcrypt.genSalt(10);
@@ -51,6 +73,8 @@ router.post(
           const payload = {
             user: {
               id: user.id,
+              isAdmin : user.isAdmin,
+              isPrecedent : user.isPrecedent,
             },
           };
 
