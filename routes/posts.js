@@ -43,6 +43,7 @@ router.post(
           title: req.body.title,
           imageObj: uploadResponse,
           eventBody: req.body.eventBody,
+          tags: req.body.tags,
           isPublic: req.body.isPublic,
         });
 
