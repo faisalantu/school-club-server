@@ -21,7 +21,16 @@ const PostSchema = mongoose.Schema({
     type: Boolean,
     required: true,
   },
-/*   userId: {
+  anonymous: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  category: {
+    type: String,
+    required: true,
+  },
+  /*   userId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: "User",

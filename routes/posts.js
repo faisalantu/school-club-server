@@ -27,6 +27,8 @@ router.post(
       .not()
       .isEmpty()
       .isBoolean(),
+    check("anonymous", "anyomous should be boolean").isBoolean(),
+    check("category", "post must have a category").not().isEmpty().isString(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -38,13 +40,15 @@ router.post(
         const uploadResponse = await cloudinary.uploader.upload(fileStr, {
           upload_preset: "posts",
         });
-        console.log(req.body.eventDate);
+        
         let post = new PostModel({
           title: req.body.title,
           imageObj: uploadResponse,
           eventBody: req.body.eventBody,
           tags: req.body.tags,
           isPublic: req.body.isPublic,
+          anonymous: req.body.anonymous,
+          category: req.body.category,
         });
 
         try {
