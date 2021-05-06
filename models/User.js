@@ -48,7 +48,7 @@ const UserSchema = mongoose.Schema({
     required: false,
   },
   clubId: {
-    type: Array,
+    type: [mongoose.Schema.Types.ObjectId],
     required: true,
     ref:'ClubList'
   },

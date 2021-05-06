@@ -3,10 +3,60 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const auth = require("../middleware/auth");
 
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
 const User = require("../models/User");
+// @route   GET api/users
+// @desc    get 1 users
+// @access  Private 
+router.get("/",auth, async (req, res) => {
+ 
+  try {
+    const user = await User.findById(req.user.id).select("-password")
+    res.status(200).send(user);
+  } catch (err) {
+    console.error(err.message); 
+    res.status(500).send({ success: false, masssage: "user not found" });;
+  }
+
+
+}); 
+
+// @route   GET api/users
+// @desc    get 1 users
+// @access  Private 
+router.put("/",auth, async (req, res) => {
+ 
+  try {
+
+    const user = await User.findById(req.user.id)
+    user.firstname = req.body.firstname
+    user.lastname = req.body.lastname
+    user.email = req.body.email
+    user.studentid = req.body.studentid
+    user.firstname = req.body.firstname
+    user.depertmentId = req.body.depertmentId
+    user.interested = req.body.interested
+    user.clubId = req.body.clubId
+    if(req.body.image != null ){
+      const imageObj = await cloudinary.uploader.upload(req.body.image, {
+        upload_preset: "users",
+      });
+      user.imageObj = imageObj
+    }
+    //console.log(user)
+    await user.save();
+    res.status(200).send({ success: true, masssage: "success" });
+  } catch (err) {
+    console.error(err.message); 
+    res.status(500).send({ success: false, masssage: "user not found" });;
+  }
+
+ 
+}); 
+
 
 // @route   POST api/users
 // @desc    get all users
@@ -38,8 +88,8 @@ router.post(
         email,
         password,
         studentid,
-        depertmentId,
-        intersted,
+        depertmentId,        
+        interested,
         clubId,
       } = req.body;
       try {
@@ -61,7 +111,7 @@ router.post(
             isAdmin : false,
             isPrecedent : false,
             depertmentId,
-            intersted,
+            interested,
             clubId,
           });
 
