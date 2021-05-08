@@ -8,9 +8,31 @@ const { cloudinary } = require("../utils/cloudinary");
 // @desc    get all posts
 // @access  Public
 router.get("/", async (req, res) => {
-  res.json({
-    msg: "GET api/post",
-  });
+  try {
+    const posts = await PostModel.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .lookup({
+        from: "clublists",
+        localField: "clubId",
+        foreignField: "_id",
+        as: "clublist",
+      })
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId:0,
+        userId:0,
+      });
+    res.status(200).send(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no posts" });
+  }
 });
 
 // @route   POST api/posts
@@ -18,6 +40,7 @@ router.get("/", async (req, res) => {
 // @access  Private
 router.post(
   "/",
+  auth,
   [
     check("title", "Please add title").not().isEmpty(),
     check("imageObj", "Please include an image").not().isEmpty(),
@@ -29,6 +52,7 @@ router.post(
       .isBoolean(),
     check("anonymous", "anyomous should be boolean").isBoolean(),
     check("category", "post must have a category").not().isEmpty().isString(),
+    check("clubId", "clubId should be string").not().isEmpty().isString(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -40,7 +64,6 @@ router.post(
         const uploadResponse = await cloudinary.uploader.upload(fileStr, {
           upload_preset: "posts",
         });
-        
         let post = new PostModel({
           title: req.body.title,
           imageObj: uploadResponse,
@@ -49,6 +72,8 @@ router.post(
           isPublic: req.body.isPublic,
           anonymous: req.body.anonymous,
           category: req.body.category,
+          userId: req.user.id,
+          clubId: req.body.clubId,
         });
 
         try {

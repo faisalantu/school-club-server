@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
+const slug = require("mongoose-slug-generator");
+mongoose.plugin(slug);
 
 const PostSchema = mongoose.Schema({
   title: {
     type: String,
     required: true,
   },
+  slug: { type: String, slug: "title", unique: true },
   imageObj: {
     type: Object,
     required: false,
@@ -30,11 +33,16 @@ const PostSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  /*   userId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: "User",
-  }, */
+  },
+  clubId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "ClubList",
+  },
   date: {
     type: Date,
     default: Date.now,
