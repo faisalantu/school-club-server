@@ -9,6 +9,27 @@ const { cloudinary } = require("../utils/cloudinary");
 // @access  Public
 router.get("/", async (req, res) => {
   try {
+    let { category, club, skip, limit } = req.query;
+    skip = Number(skip);
+    limit = Number(limit);
+    function matchQuery() {
+      if (category && club) {
+        return {
+          "clublist.slug": req.query.club,
+          category: req.query.category,
+        };
+      } else if (category) {
+        return {
+          category: req.query.category,
+        };
+      } else if (club) {
+        return {
+          "clublist.slug": req.query.club,
+        };
+      } else {
+        return {};
+      }
+    }
     const posts = await PostModel.aggregate()
       .lookup({
         from: "users",
@@ -22,12 +43,53 @@ router.get("/", async (req, res) => {
         foreignField: "_id",
         as: "clublist",
       })
+      .match(matchQuery())
       .project({
         "userlist.password": 0,
         "userlist.email": 0,
-        clubId:0,
-        userId:0,
-      });
+        clubId: 0,
+        userId: 0,
+      })
+      // .project({
+      //   "clublist.slug": 1,
+      //   category: 1,
+      // })
+      .skip(skip ? skip : 0)
+      .limit(limit ? limit : 30);
+
+    res.status(200).send(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no posts" });
+  }
+});
+
+// @route   GET api/post/one
+// @desc    get all post/one
+// @access  Public
+router.get("/one", async (req, res) => {
+  try {
+    let { slug } = req.query;
+    const posts = await PostModel.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .lookup({
+        from: "clublists",
+        localField: "clubId",
+        foreignField: "_id",
+        as: "clublist",
+      })
+      .match({slug:req.query.slug})
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      }).limit(1);
     res.status(200).send(posts);
   } catch (err) {
     console.error(err.message);
