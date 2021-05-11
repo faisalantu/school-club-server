@@ -4,9 +4,12 @@ const PostModel = require("../models/Post");
 const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
+const mongoose = require('mongoose')
+
 // @route   GET api/posts
 // @desc    get all posts
 // @access  Public
+// @query   categody,club,skip,limit
 router.get("/", async (req, res) => {
   try {
     let { category, club, skip, limit } = req.query;
@@ -55,7 +58,7 @@ router.get("/", async (req, res) => {
       //   category: 1,
       // })
       .skip(skip ? skip : 0)
-      .limit(limit ? limit : 30);
+      .limit(limit ? limit : 20);
 
     res.status(200).send(posts);
   } catch (err) {
@@ -96,9 +99,36 @@ router.get("/one", async (req, res) => {
     res.status(500).send({ success: false, masssage: "no posts" });
   }
 });
+// @route   GET api/post/user
+// @desc    get all user post
+// @access  private
+router.get("/user",auth, async (req, res) => {
+  console.log(req.user.id)
+  let userId = mongoose.Types.ObjectId(req.user.id);
+  try {
+    const posts = await PostModel.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .match({"userlist._id":userId})
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      }).limit(20);
+    res.status(200).send(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no posts" });
+  }
+});
 
 // @route   POST api/posts
-// @desc    get all posts
+// @desc    single POST request
 // @access  Private
 router.post(
   "/",
