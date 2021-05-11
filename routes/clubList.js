@@ -3,8 +3,8 @@ const router = express.Router();
 const ClubList = require('../models/ClubList')
 const auth = require("../middleware/auth");
 
-// @route   GET api/posts
-// @desc    get all posts
+// @route   GET api/clublist
+// @desc    get all clublist
 // @access  Public
 router.get("/", async (req, res) => {
     const club = await ClubList.find();
@@ -17,8 +17,8 @@ router.get("/", async (req, res) => {
   
   });
 
-// @route   POST api/posts
-// @desc    get all posts
+// @route   POST api/clublist
+// @desc    get all clublist
 // @access  Private
 router.post("/",auth,async (req, res) => {
 
@@ -33,15 +33,15 @@ router.post("/",auth,async (req, res) => {
       res.send( { success: true ,message:"club added "  });
 });
 
-// @route   PUT api/posts
-// @desc    get all posts
+// @route   PUT api/clublist
+// @desc    get all clublist
 // @access  Private
 router.put("/", (req, res) => {
   res.send("PUT api/clublist");
 });
 
-// @route   DELETE api/posts
-// @desc    get all posts
+// @route   DELETE api/clublist
+// @desc    get all clublist
 // @access  Private
 router.delete("/", (req, res) => {
   res.send("DELETE api/clublist");

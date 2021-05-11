@@ -4,20 +4,135 @@ const PostModel = require("../models/Post");
 const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
+const mongoose = require('mongoose')
+
 // @route   GET api/posts
 // @desc    get all posts
 // @access  Public
+// @query   categody,club,skip,limit
 router.get("/", async (req, res) => {
-  res.json({
-    msg: "GET api/post",
-  });
+  try {
+    let { category, club, skip, limit } = req.query;
+    skip = Number(skip);
+    limit = Number(limit);
+    function matchQuery() {
+      if (category && club) {
+        return {
+          "clublist.slug": req.query.club,
+          category: req.query.category,
+        };
+      } else if (category) {
+        return {
+          category: req.query.category,
+        };
+      } else if (club) {
+        return {
+          "clublist.slug": req.query.club,
+        };
+      } else {
+        return {};
+      }
+    }
+    const posts = await PostModel.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .lookup({
+        from: "clublists",
+        localField: "clubId",
+        foreignField: "_id",
+        as: "clublist",
+      })
+      .match(matchQuery())
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      })
+      // .project({
+      //   "clublist.slug": 1,
+      //   category: 1,
+      // })
+      .skip(skip ? skip : 0)
+      .limit(limit ? limit : 20);
+
+    res.status(200).send(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no posts" });
+  }
+});
+
+// @route   GET api/post/one
+// @desc    get all post/one
+// @access  Public
+router.get("/one", async (req, res) => {
+  try {
+    let { slug } = req.query;
+    const posts = await PostModel.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .lookup({
+        from: "clublists",
+        localField: "clubId",
+        foreignField: "_id",
+        as: "clublist",
+      })
+      .match({slug:req.query.slug})
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      }).limit(1);
+    res.status(200).send(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no posts" });
+  }
+});
+// @route   GET api/post/user
+// @desc    get all user post
+// @access  private
+router.get("/user",auth, async (req, res) => {
+  console.log(req.user.id)
+  let userId = mongoose.Types.ObjectId(req.user.id);
+  try {
+    const posts = await PostModel.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .match({"userlist._id":userId})
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      }).limit(20);
+    res.status(200).send(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no posts" });
+  }
 });
 
 // @route   POST api/posts
-// @desc    get all posts
+// @desc    single POST request
 // @access  Private
 router.post(
   "/",
+  auth,
   [
     check("title", "Please add title").not().isEmpty(),
     check("imageObj", "Please include an image").not().isEmpty(),
@@ -29,6 +144,7 @@ router.post(
       .isBoolean(),
     check("anonymous", "anyomous should be boolean").isBoolean(),
     check("category", "post must have a category").not().isEmpty().isString(),
+    check("clubId", "clubId should be string").not().isEmpty().isString(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -40,7 +156,6 @@ router.post(
         const uploadResponse = await cloudinary.uploader.upload(fileStr, {
           upload_preset: "posts",
         });
-        
         let post = new PostModel({
           title: req.body.title,
           imageObj: uploadResponse,
@@ -49,6 +164,8 @@ router.post(
           isPublic: req.body.isPublic,
           anonymous: req.body.anonymous,
           category: req.body.category,
+          userId: req.user.id,
+          clubId: req.body.clubId,
         });
 
         try {
