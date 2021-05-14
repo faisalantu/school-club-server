@@ -4,7 +4,7 @@ const PostModel = require("../models/Post");
 const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 // @route   GET api/posts
 // @desc    get all posts
@@ -72,7 +72,20 @@ router.get("/", async (req, res) => {
 // @access  Public
 router.get("/one", async (req, res) => {
   try {
-    let { slug } = req.query;
+    let { slug, postId } = req.query;
+    let postObjId = mongoose.Types.ObjectId(postId);
+    function matchQuery() {
+      if (slug) {
+        return {
+          slug: slug,
+        };
+      } else if (postId) {
+        return {
+          _id: postObjId,
+        };
+      } else {
+      }
+    }
     const posts = await PostModel.aggregate()
       .lookup({
         from: "users",
@@ -86,13 +99,14 @@ router.get("/one", async (req, res) => {
         foreignField: "_id",
         as: "clublist",
       })
-      .match({slug:req.query.slug})
+      .match(matchQuery())
       .project({
         "userlist.password": 0,
         "userlist.email": 0,
         clubId: 0,
         userId: 0,
-      }).limit(1);
+      })
+      .limit(1);
     res.status(200).send(posts);
   } catch (err) {
     console.error(err.message);
@@ -102,8 +116,8 @@ router.get("/one", async (req, res) => {
 // @route   GET api/post/user
 // @desc    get all user post
 // @access  private
-router.get("/user",auth, async (req, res) => {
-  console.log(req.user.id)
+router.get("/user", auth, async (req, res) => {
+  console.log(req.user.id);
   let userId = mongoose.Types.ObjectId(req.user.id);
   try {
     const posts = await PostModel.aggregate()
@@ -113,13 +127,14 @@ router.get("/user",auth, async (req, res) => {
         foreignField: "_id",
         as: "userlist",
       })
-      .match({"userlist._id":userId})
+      .match({ "userlist._id": userId })
       .project({
         "userlist.password": 0,
         "userlist.email": 0,
         clubId: 0,
         userId: 0,
-      }).limit(20);
+      })
+      .limit(20);
     res.status(200).send(posts);
   } catch (err) {
     console.error(err.message);
