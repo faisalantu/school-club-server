@@ -34,6 +34,10 @@ const UserSchema = mongoose.Schema({
     type: Boolean,
     required: true,
   },
+  presidentOf: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+  },
   depertmentId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
