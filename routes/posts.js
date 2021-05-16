@@ -158,7 +158,14 @@ router.post(
       .isEmpty()
       .isBoolean(),
     check("anonymous", "anyomous should be boolean").isBoolean(),
-    check("category", "post must have a category").not().isEmpty().isString(),
+    check("category", "post must have a category").custom((value) => {
+      if (value === "discussion" || value === "issue") {
+        console.log(value);
+        return value;
+      } else {
+        throw new Error("lol nice try");
+      }
+    }),
     check("clubId", "clubId should be string").not().isEmpty().isString(),
   ],
   async (req, res) => {
@@ -300,7 +307,7 @@ router.put(
 router.delete("/one", auth, postDeleteAuth, async (req, res) => {
   let { postId } = req.query;
   //check post by id
-  const post = await PostModel.deleteOne({_id : postId});
+  const post = await PostModel.deleteOne({ _id: postId });
   res.send(post);
 });
 
