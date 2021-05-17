@@ -22,7 +22,50 @@ router.get("/",auth, async (req, res) => {
   }
 
 
+});
+// @route   GET api/users
+// @desc    get all matched user users
+// @access  Private  admin route
+router.get("/all",auth, async (req, res) => {
+ 
+  try {
+    let { name } = req.query;
+    if(name.length < 2)
+    {
+      // res.status(200).send([]);
+      name = null
+    }
+    const regex = new RegExp(name, 'i') // i for case insensitive
+    const user = await User.find( 
+      {$or:[
+        {firstname: {$regex: regex}},
+        {email: {$regex: regex}},
+        {lastname: {$regex: regex}},
+      ]}).select("-password -likes -interested")
+    res.status(200).send(user);
+  } catch (err) {
+    console.error(err.message); 
+    res.status(500).send({ success: false, masssage: "user not found" });;
+  }
+
+
 }); 
+// @route   GET api/users/:ID
+// @desc    get 1 users
+// @access  Private 
+router.get("/:ID",auth, async (req, res) => {
+ 
+  try {
+    const user = await User.findById(req.params.ID).select("-password -password -likes -interested")
+    res.status(200).send(user);
+  } catch (err) {
+    console.error(err.message); 
+    res.status(500).send({ success: false, masssage: "user not found" });;
+  }
+
+
+});
+ 
 
 // @route   GET api/users
 // @desc    get 1 users

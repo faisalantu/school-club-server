@@ -5,6 +5,10 @@ const ClubListSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  precedent: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+  },
   date: {
     type: Date,
     default: Date.now,
