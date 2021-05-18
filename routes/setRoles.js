@@ -10,25 +10,31 @@ const { check, validationResult } = require("express-validator");
 // @desc    get all role
 // @access  Public
 router.get("/", async (req, res) => {
-    const user = await User.aggregate()
-    .lookup({
-      from: "clubLists",
-      localField: "clubId",
-      foreignField: "_id",
-      as: "clubList",
-    })
-    .lookup({
-      from: "roles",
-      localField: "roles",
-      foreignField: "_id",
-      as: "roles",
-    })
-    .match({_id:req.query.id})
-  if (user) {
-    res.status(200).send(user);
-  } else {
-    res.status(400).send({ success: false, masssage: "user not found" });
-  }
+  //   const user = await User.aggregate()
+  //   .lookup({
+  //     from: "clubLists",
+  //     localField: "clubId",
+  //     foreignField: "_id",
+  //     as: "clubList",
+  //   })
+  //   .lookup({
+  //     from: "roles",
+  //     localField: "roles",
+  //     foreignField: "_id",
+  //     as: "roles",
+  //   })
+  //   .match({_id:req.query.id})
+  // if (user) {
+  //   res.status(200).send(user);
+  // } else {
+  //   res.status(400).send({ success: false, masssage: "user not found" });
+  // }
+  // var fields = { 'precedent.clubId': 1, 'precedent.firstname': 1 };
+  // const theuser =await  User.populate(user, { path: 'clubId.clublist', model: 'ClubList', select: { 'name': 1, } })
+  const precedent = await Club.find().populate('precedent',"_id firstname lastname imageObj").select("precedent name")
+  const memberWithRoles = await User.find({ "roles.0": { "$exists": true } }).populate('roles','name _id').select("roles _id firstname lastname imageObj")
+  // const user = await User.find({$where:'this.clubId.length>0'} ).populate('clubId','name _id').select("clubId _id firstname lastname imageObj")
+  res.status(200).send({memberWithRoles ,precedent});
 });
 
 // @route   POST api/role
@@ -56,9 +62,10 @@ router.put(
     auth,
     [
         check("userId", "Please add userId").not().isEmpty(),
-        check("precedent", "Please include precedent").not(),
-        check("selectedClubName", "Please include Club").not(),
-        check("RolesId", "Please include Roles").not(),
+        check("precedent", "Please include precedent").not().isEmpty(),
+        check("selectedClubName", "Please include Club").not().isEmpty(),
+        check("RolesId", "Please include Club").not().isEmpty(),
+        check("clubId", "Please include Roles").not().isEmpty(),
     ],
     async (req, res) => {
         console.log("put", req.body);
@@ -66,6 +73,10 @@ router.put(
             const { userId, precedent, selectedClubName, RolesId, clubId } = req.body
             console.log("userId", userId, "precedent", precedent, "selectedClubName", selectedClubName, "RolesId", RolesId)
             if (precedent === true) {
+              // previous Precedent to normal user 
+                const club = await Club.find({ _id: clubId });
+                await User.updateOne({ _id: club.precedent }, { $set: { isPrecedent: false } });
+                // normal user to precedent
                 await Club.updateOne({ _id: clubId }, { $set: { precedent: userId } });
                 await User.updateOne({ _id: userId }, { $set: { isPrecedent: precedent } });
             }

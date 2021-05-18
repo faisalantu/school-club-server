@@ -8,6 +8,7 @@ const ClubListSchema = mongoose.Schema({
   precedent: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
+    ref:"user"
   },
   date: {
     type: Date,
