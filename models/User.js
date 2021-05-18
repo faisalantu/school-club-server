@@ -11,7 +11,7 @@ const UserSchema = mongoose.Schema({
   },
   lastname: {
     type: String,
-    required: true,
+    required: true, 
   },
   email: {
     type: String,
@@ -20,7 +20,7 @@ const UserSchema = mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: true, 
   },
   studentid: {
     type: String,
@@ -33,6 +33,12 @@ const UserSchema = mongoose.Schema({
   isPrecedent: {
     type: Boolean,
     required: true,
+  },
+
+  roles: {
+    type: [mongoose.Schema.Types.ObjectId],
+    required: false,
+    ref:'Role'
   },
   presidentOf: {
     type: mongoose.Schema.Types.ObjectId,
