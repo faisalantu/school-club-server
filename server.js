@@ -26,6 +26,8 @@ app.use("/api/clublist", require("./routes/clubList"));
 app.use("/api/depertment", require("./routes/depertment"));
 app.use("/api/role", require("./routes/role"));
 app.use("/api/setroles", require("./routes/setRoles"));
+app.use("/api/eventcategory", require("./routes/eventCategory"));
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

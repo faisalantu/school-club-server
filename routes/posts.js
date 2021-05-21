@@ -269,9 +269,9 @@ router.post(
   }
 );
 
-// @route   PUT api/posts/one
-// @desc    edit one post
-// @access  Private
+// @route   PUT api/posts/admin
+// @desc    add admin post
+// @access  Private (ony precedent or higher)
 router.put(
   "/one",
   auth,

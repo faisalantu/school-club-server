@@ -9,7 +9,6 @@ module.exports = async function (req, res, next) {
   try {
     //check user by id
     const user = await UserModel.findById(req.user.id).exec();
-    console.log(user);
 
     //can be checked with == but for security used === and JSON.stringgify
     if (

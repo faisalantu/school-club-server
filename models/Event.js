@@ -5,6 +5,7 @@ const EventSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  slug: { type: String, slug: "title", unique: true },
   location: {
     type: String,
     required: true,
@@ -49,11 +50,21 @@ const EventSchema = mongoose.Schema({
     type: Boolean,
     required: true,
   },
-/*   userId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: "User",
-  }, */
+  },
+  clubId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "ClubList",
+  },
+  eventType: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
   date: {
     type: Date,
     default: Date.now,

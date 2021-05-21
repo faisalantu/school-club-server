@@ -2,21 +2,128 @@ const express = require("express");
 const router = express.Router();
 const Event = require("../models/Event");
 const auth = require("../middleware/auth");
+const mongoose = require('mongoose')
+const checkPrecedent = require("../middleware/checkPrecedent");
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
 
 // @route   GET api/events
 // @desc    get all events
 // @access  Public
+// @query   category,club,skip,limit => category ment eventType
 router.get("/", async (req, res) => {
-  const evevt = await Event.find().sort({ _id: -1 });
-  if (evevt) {
-    res.status(200).send(evevt);
-  } else {
-    res.status(400).send({ success: false, masssage: "events not found" });
+  try {
+    let { category, club, skip, limit } = req.query;
+    skip = Number(skip);
+    limit = Number(limit);
+    function matchQuery() {
+      if (category && club) {
+        return {
+          "clublist.slug": req.query.club,
+          "eventCategory.slug": req.query.category,
+        };
+      } else if (category) {
+        return {
+          "eventCategory.slug": req.query.category,
+        };
+      } else if (club) {
+        return {
+          "clublist.slug": req.query.club,
+        };
+      } else {
+        return {};
+      }
+    }
+    const events = await Event.aggregate()
+
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .unwind("userlist")
+      .lookup({
+        from: "clublists",
+        localField: "clubId",
+        foreignField: "_id",
+        as: "clublist",
+      })
+      .unwind("clublist")
+      .lookup({
+        from: "eventcategories",
+        localField: "eventType",
+        foreignField: "_id",
+        as: "eventCategory",
+      })
+      .unwind("eventCategory")
+      .match(matchQuery())
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      })
+      // .project({
+      //   "clublist.slug": 1,
+      //   eventCategory: 1,
+      // })
+      .skip(skip ? skip : 0)
+      .limit(limit ? limit : 20);
+
+    res.status(200).send(events);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no events" });
   }
 });
 
+// @route   GET api/post/one
+// @desc    get all post/one
+// @access  Public
+router.get("/one", async (req, res) => {
+  try {
+    let { slug, postId } = req.query;
+    let postObjId = mongoose.Types.ObjectId(postId);
+    function matchQuery() {
+      if (slug) {
+        return {
+          slug: slug,
+        };
+      } else if (postId) {
+        return {
+          _id: postObjId,
+        };
+      } else {
+      }
+    }
+    const events = await Event.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .lookup({
+        from: "clublists",
+        localField: "clubId",
+        foreignField: "_id",
+        as: "clublist",
+      })
+      .match(matchQuery())
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      })
+      .limit(1);
+    res.status(200).send(events);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no event" });
+  }
+});
 // @route   GET api/events
 // @desc    get one events
 // @access  Public
@@ -34,6 +141,8 @@ router.get("/:id", async (req, res) => {
 // @access  Private
 router.post(
   "/",
+  auth,
+  checkPrecedent,
   [
     check("title", "Please add title").not().isEmpty(),
     check("location", "Please add a location").not().isEmpty(),
@@ -48,6 +157,10 @@ router.post(
     check("email", "Please include a valid email").isEmail(),
     check("contactNumber", "Please include a phone number").not().isEmpty(),
     check("imageObj", "Please include an image").not().isEmpty(),
+    check("eventType", "eventType should be a string")
+      .not()
+      .isEmpty()
+      .isString(),
     check("eventBody", "Please write someting about the event").not().isEmpty(),
     check("isPublic", "Please include a phone number")
       .not()
@@ -64,7 +177,6 @@ router.post(
         const uploadResponse = await cloudinary.uploader.upload(fileStr, {
           upload_preset: "events",
         });
-        console.log(req.body.eventDate);
         let event = new Event({
           title: req.body.title,
           location: req.body.location,
@@ -78,6 +190,9 @@ router.post(
           imageObj: uploadResponse,
           eventBody: req.body.eventBody,
           isPublic: req.body.isPublic,
+          userId: req.user.id,
+          eventType: req.body.eventType,
+          clubId: req.presidentOf,
         });
 
         try {
@@ -100,67 +215,5 @@ router.post(
 // @route   PUT api/events
 // @desc    update single events
 // @access  Private
-router.put(
-  "/:id",
-  auth,
-  [
-    check("title", "Please add title").not().isEmpty(),
-    check("location", "Please add a location").not().isEmpty(),
-    check("fee", "Please add a fee").not().isEmpty().isNumeric(),
-    check("tickets", "Please add number of tickets")
-      .not()
-      .isEmpty()
-      .isNumeric(),
-    check("eventTime", "Please add event time").not().isEmpty(),
-    check("email", "Please include a valid email").isEmail(),
-    check("contactNumber", "Please include a phone number").not().isEmpty(),
-    check("isPublic", "Please include a phone number").not().isEmpty(),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-    }
-    const event = await Event.findByIdAndUpdate(req.params.id, {
-      title: req.body.title,
-      location: req.body.location,
-      tickets: req.body.tickets,
-      fee: req.body.fee,
-      time: req.body.time,
-      email: req.body.email,
-      contactNumber: req.body.contactNumber,
-      isPublic: req.body.isPublic,
-      userId: req.user.id,
-    });
-
-    if (!event) {
-      return res.status(500).send("the event cannot be updated!");
-    }
-    res.status(200).json({ success: true, message: "the Event is updated!" });
-  }
-);
-
-// @route   DELETE api/events
-// @desc    DELETE events
-// @access  Private
-router.delete("/:id", auth, (req, res) => {
-  Event.findByIdAndRemove(req.params.id)
-    .then((Event) => {
-      if (Event) {
-        return res
-          .status(200)
-          .json({ success: true, message: "the Event is deleted!" });
-      } else {
-        return res
-          .status(404)
-          .json({ success: false, message: "Event not found!" });
-      }
-    })
-    .catch((err) => {
-      return res
-        .status(500)
-        .json({ success: false, error: err, message: "could not be deleted" });
-    });
-});
 
 module.exports = router;
