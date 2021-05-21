@@ -56,7 +56,7 @@ router.get("/all",auth, async (req, res) => {
 router.get("/:ID",auth, async (req, res) => {
  
   try {
-    const user = await User.findById(req.params.ID).select("-password -password -likes -interested")
+    const user = await User.findById(req.params.ID).populate("presidentOf").select("-password -password -likes -interested")
     res.status(200).send(user);
   } catch (err) {
     console.error(err.message); 

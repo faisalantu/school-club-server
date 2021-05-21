@@ -10,49 +10,26 @@ const { check, validationResult } = require("express-validator");
 // @desc    get all role
 // @access  Public
 router.get("/", async (req, res) => {
-  //   const user = await User.aggregate()
-  //   .lookup({
-  //     from: "clubLists",
-  //     localField: "clubId",
-  //     foreignField: "_id",
-  //     as: "clubList",
-  //   })
-  //   .lookup({
-  //     from: "roles",
-  //     localField: "roles",
-  //     foreignField: "_id",
-  //     as: "roles",
-  //   })
-  //   .match({_id:req.query.id})
-  // if (user) {
-  //   res.status(200).send(user);
-  // } else {
-  //   res.status(400).send({ success: false, masssage: "user not found" });
-  // }
-  // var fields = { 'precedent.clubId': 1, 'precedent.firstname': 1 };
-  // const theuser =await  User.populate(user, { path: 'clubId.clublist', model: 'ClubList', select: { 'name': 1, } })
-  const precedent = await Club.find().populate('precedent',"_id firstname lastname imageObj").select("precedent name")
-  const memberWithRoles = await User.find({ "roles.0": { "$exists": true } }).populate('roles','name _id').select("roles _id firstname lastname imageObj")
-  // const user = await User.find({$where:'this.clubId.length>0'} ).populate('clubId','name _id').select("clubId _id firstname lastname imageObj")
-  res.status(200).send({memberWithRoles ,precedent});
+    try {
+        const precedent = await Club.find({ precedent: { $exists: true } }).populate('precedent', "_id firstname lastname imageObj").select("precedent name")
+        const memberWithRoles = await User.find({ "roles.0": { "$exists": true } }).populate('roles', 'name _id').select("roles _id firstname lastname imageObj")
+        res.status(200).send({ memberWithRoles, precedent });
+    } catch (error) {
+        res.status(500).send({ success: false, error: error });
+    }
+
 });
 
-// @route   POST api/role
-// @desc    get all role
-// @access  Private
-// router.post("/", auth, async (req, res) => {
-//   let roleList = new role({
-//     name: req.body.name,
-//     detail: req.body.detail,
-//   });
-//   roleList = await roleList.save();
-//   if (!roleList) {
-//     res
-//       .status(500)
-//       .send({ success: false, message: "The roleList cannot be created" });
-//   }
-//   res.send({ success: true, message: "role added " });
+// router.get("/test", async (req, res) => {
+//     try {
+//        await User.updateMany({},{ $pull: { roles: '60a7f15f3c94f2485cdfe508'} })
+//         res.status(200).send({ mas:"dom"}); 
+//     } catch (error) {
+//         res.status(500).send({ mas:"not dom"});  
+//     }
+
 // });
+
 
 // @route   PUT api/role
 // @desc    get all role
@@ -68,25 +45,36 @@ router.put(
         check("clubId", "Please include Roles").not().isEmpty(),
     ],
     async (req, res) => {
-        console.log("put", req.body);
+        //console.log("put", req.body);
         try {
+            let alreadyAprecedent = false
             const { userId, precedent, selectedClubName, RolesId, clubId } = req.body
-            console.log("userId", userId, "precedent", precedent, "selectedClubName", selectedClubName, "RolesId", RolesId)
+            //console.log("userId", userId, "precedent", precedent, "selectedClubName", selectedClubName, "RolesId", RolesId)
+            const isclubprecedent = await Club.find({ precedent: userId, _id: { $ne: clubId } });
+            const isprecedent = await Club.find({ precedent: userId });
             if (precedent === true) {
-              // previous Precedent to normal user 
-                const club = await Club.find({ _id: clubId });
-                await User.updateOne({ _id: club.precedent }, { $set: { isPrecedent: false } });
-                // normal user to precedent
-                await Club.updateOne({ _id: clubId }, { $set: { precedent: userId } });
-                await User.updateOne({ _id: userId }, { $set: { isPrecedent: precedent } });
+                console.log(isprecedent.length < 1)
+                if (isclubprecedent.length > 0) {
+                    alreadyAprecedent = true
+                    //res.send({ success: false, massage:alreadyAprecedent ? `user is already precedent of ${isclubprecedent[0].name}--- `:"updated" });
+                }
+                else if (isprecedent.length < 1) {
+
+                    // previous Precedent to normal user 
+                    const club = await Club.find({ precedent: userId, _id: clubId });
+                    await User.updateOne({ _id: club.precedent }, { $set: { isPrecedent: false, presidentOf: null } });
+                    // normal user to precedent
+                    await Club.updateOne({ _id: clubId }, { $set: { precedent: userId } });
+                    await User.updateOne({ _id: userId }, { $set: { isPrecedent: precedent, presidentOf: clubId } });
+                }
+
             }
-            if(RolesId.length > 0){
-                await User.updateOne({ _id: userId }, { $set: { roles: RolesId } });
-            }
-            res.send({ success: true});
+            await User.updateOne({ _id: userId }, { $set: { roles: RolesId, presidentOf: clubId } });
+            res.send({ success: true, massage: alreadyAprecedent ? `user is already precedent of ${isclubprecedent[0].name} ` : "updated" });
+            // res.send({ success: true ,massage:"updated" });
         } catch (error) {
-            console.log(error)
-            res.send({ success: false });
+            console.log("error:", error)
+            res.send({ success: false, massage: error });
         }
 
 

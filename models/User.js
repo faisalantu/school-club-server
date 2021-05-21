@@ -43,6 +43,7 @@ const UserSchema = mongoose.Schema({
   presidentOf: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
+    ref:'ClubList'
   },
   depertmentId: {
     type: mongoose.Schema.Types.ObjectId,

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const role = require("../models/Role");
+const User = require("../models/User");
 const auth = require("../middleware/auth");
 const { check, validationResult } = require("express-validator");
 
@@ -58,17 +59,27 @@ router.put(
 // @route   DELETE api/role
 // @desc    get all role
 // @access  Private
-router.delete("/:ID", (req, res) => {
-    role.deleteOne(
-        {_id: req.params.ID},
-        function(err){
-          if (!err){
-            res.send("Successfully deleted the corresponding article.");
-          } else {
-            res.send(err);
-          }
-        }
-      );
+router.delete("/:ID", async (req, res) => {
+  console.log(typeof req.params.ID)
+    // role.deleteOne(
+    //     {_id: req.params.ID},
+    //     function(err){
+    //       if (!err){
+    //         User.updateMany({},{ $pull: { roles: req.params.ID} })
+    //         res.send("Successfully deleted the corresponding article.");
+    //       } else {
+    //         res.send(err);
+    //       }
+    //     }
+    //   );
+    try {
+      await role.deleteOne({_id: req.params.ID} ) 
+      await User.updateMany({},{ $pull: { roles: req.params.ID} }) 
+      res.send("Successfully deleted the corresponding role.");   
+    } catch (error) {
+     console.log(error)
+      res.send(error);
+    }
 });
 
 module.exports = router;
