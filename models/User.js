@@ -11,7 +11,7 @@ const UserSchema = mongoose.Schema({
   },
   lastname: {
     type: String,
-    required: true, 
+    required: true,
   },
   email: {
     type: String,
@@ -20,7 +20,7 @@ const UserSchema = mongoose.Schema({
   },
   password: {
     type: String,
-    required: true, 
+    required: true,
   },
   studentid: {
     type: String,
@@ -38,19 +38,24 @@ const UserSchema = mongoose.Schema({
   roles: {
     type: [mongoose.Schema.Types.ObjectId],
     required: false,
-    ref:'Role'
+    ref: "Role",
+  },
+  rolesOf: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: "ClubList",
   },
   presidentOf: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
-    ref:'ClubList'
+    ref: "ClubList",
   },
   depertmentId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref:'Depertment'
+    ref: "Depertment",
   },
-  interested: {   
+  interested: {
     type: Array,
     required: true,
   },
@@ -61,7 +66,7 @@ const UserSchema = mongoose.Schema({
   clubId: {
     type: [mongoose.Schema.Types.ObjectId],
     required: true,
-    ref:'ClubList'
+    ref: "ClubList",
   },
   date: {
     type: Date,
@@ -69,4 +74,4 @@ const UserSchema = mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('user', UserSchema);
+module.exports = mongoose.model("user", UserSchema);
