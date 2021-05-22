@@ -104,12 +104,14 @@ router.get("/one", async (req, res) => {
         foreignField: "_id",
         as: "userlist",
       })
+      .unwind("userlist")
       .lookup({
         from: "clublists",
         localField: "clubId",
         foreignField: "_id",
         as: "clublist",
       })
+      .unwind("clublist")
       .match(matchQuery())
       .project({
         "userlist.password": 0,
