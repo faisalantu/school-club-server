@@ -120,6 +120,9 @@ router.get("/one", async (req, res) => {
 // @access  private
 router.get("/user", auth, async (req, res) => {
   let userId = mongoose.Types.ObjectId(req.user.id);
+  let { skip, limit } = req.query;
+  skip = Number(skip);
+  limit = Number(limit);
   try {
     const posts = await PostModel.aggregate()
       .lookup({
@@ -135,7 +138,8 @@ router.get("/user", auth, async (req, res) => {
         clubId: 0,
         userId: 0,
       })
-      .limit(20);
+      .skip(skip ? skip : 0)
+      .limit(limit ? limit : 20);
     res.status(200).send(posts);
   } catch (err) {
     console.error(err.message);
@@ -212,7 +216,8 @@ router.post(
 // @access  Private
 router.post(
   "/admin",
-  auth,checkPrecedent,
+  auth,
+  checkPrecedent,
   [
     check("title", "Please add title").not().isEmpty(),
     check("imageObj", "Please include an image").not().isEmpty(),

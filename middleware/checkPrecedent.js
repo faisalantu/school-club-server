@@ -21,7 +21,7 @@ module.exports = async function (req, res, next) {
     } else {
       res.status(401).send({
         success: false,
-        masssage: "Not authorized to add post in this category",
+        masssage: "Not authorized",
       });
     }
   } catch (err) {

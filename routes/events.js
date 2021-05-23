@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Event = require("../models/Event");
 const auth = require("../middleware/auth");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 const checkPrecedent = require("../middleware/checkPrecedent");
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
@@ -78,8 +78,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// @route   GET api/post/one
-// @desc    get all post/one
+// @route   GET api/events/one
+// @desc    get all events/one
 // @access  Public
 router.get("/one", async (req, res) => {
   try {
@@ -126,15 +126,37 @@ router.get("/one", async (req, res) => {
     res.status(500).send({ success: false, masssage: "no event" });
   }
 });
-// @route   GET api/events
-// @desc    get one events
-// @access  Public
-router.get("/:id", async (req, res) => {
-  const evevt = await Event.findById(req.params.id);
-  if (evevt) {
-    res.status(200).send(evevt);
-  } else {
-    res.status(400).send({ masssage: "event not found" });
+
+// @route   GET api/events/user
+// @desc    get all events from single user
+// @access  private
+router.get("/user", auth, async (req, res) => {
+  let userId = mongoose.Types.ObjectId(req.user.id);
+  let { skip, limit } = req.query;
+  skip = Number(skip);
+  limit = Number(limit);
+  try {
+    const events = await Event.aggregate()
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userlist",
+      })
+      .unwind("userlist")
+      .match({ "userlist._id": userId })
+      .project({
+        "userlist.password": 0,
+        "userlist.email": 0,
+        clubId: 0,
+        userId: 0,
+      })
+      .skip(skip ? skip : 0)
+      .limit(limit ? limit : 20);
+    res.status(200).send(events);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send({ success: false, masssage: "no events" });
   }
 });
 
@@ -214,8 +236,14 @@ router.post(
   }
 );
 
-// @route   PUT api/events
-// @desc    update single events
+// @route   DELETE api/events/one
+// @desc    delete one event
 // @access  Private
+router.delete("/one", auth, checkPrecedent, async (req, res) => {
+  let { postId } = req.query;
+  //check post by id
+  const post = await Event.deleteOne({ _id: postId });
+  res.send(post);
+});
 
 module.exports = router;
