@@ -3,6 +3,7 @@ const router = express.Router();
 const PostModel = require("../models/Post");
 const auth = require("../middleware/auth");
 const postDeleteAuth = require("../middleware/postDeleteAuth");
+const checkPrecedent = require("../middleware/checkPrecedent");
 const { check, validationResult } = require("express-validator");
 const { cloudinary } = require("../utils/cloudinary");
 const mongoose = require("mongoose");
@@ -119,6 +120,9 @@ router.get("/one", async (req, res) => {
 // @access  private
 router.get("/user", auth, async (req, res) => {
   let userId = mongoose.Types.ObjectId(req.user.id);
+  let { skip, limit } = req.query;
+  skip = Number(skip);
+  limit = Number(limit);
   try {
     const posts = await PostModel.aggregate()
       .lookup({
@@ -134,7 +138,8 @@ router.get("/user", auth, async (req, res) => {
         clubId: 0,
         userId: 0,
       })
-      .limit(20);
+      .skip(skip ? skip : 0)
+      .limit(limit ? limit : 20);
     res.status(200).send(posts);
   } catch (err) {
     console.error(err.message);
@@ -206,10 +211,72 @@ router.post(
     }
   }
 );
-
-// @route   PUT api/posts/one
-// @desc    edit one post
+// @route   POST api/posts
+// @desc    single POST request
 // @access  Private
+router.post(
+  "/admin",
+  auth,
+  checkPrecedent,
+  [
+    check("title", "Please add title").not().isEmpty(),
+    check("imageObj", "Please include an image").not().isEmpty(),
+    check("eventBody", "Please write someting about the event").not().isEmpty(),
+    check("tags", "insert some tags").isArray(),
+    check("isPublic", "Please include post visibility")
+      .not()
+      .isEmpty()
+      .isBoolean(),
+
+    check("category", "post must have a category").custom((value) => {
+      if (value === "club") {
+        return value;
+      } else {
+        throw new Error("lol nice try");
+      }
+    }),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+    } else {
+      try {
+        const fileStr = req.body.imageObj;
+        const uploadResponse = await cloudinary.uploader.upload(fileStr, {
+          upload_preset: "posts",
+        });
+        let post = new PostModel({
+          title: req.body.title,
+          imageObj: uploadResponse,
+          eventBody: req.body.eventBody,
+          tags: req.body.tags,
+          isPublic: req.body.isPublic,
+          category: req.body.category,
+          userId: req.user.id,
+          clubId: req.presidentOf,
+        });
+
+        try {
+          post = await post.save();
+          res.send({ success: true, message: "post added " });
+        } catch (err) {
+          res
+            .status(500)
+            .send({ success: false, message: "post cannot be created" });
+        }
+      } catch (err) {
+        res
+          .status(500)
+          .send({ success: false, message: "image upload failed" });
+      }
+    }
+  }
+);
+
+// @route   PUT api/posts/admin
+// @desc    add admin post
+// @access  Private (ony precedent or higher)
 router.put(
   "/one",
   auth,
