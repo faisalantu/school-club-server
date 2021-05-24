@@ -236,6 +236,104 @@ router.post(
   }
 );
 
+// @route   PUT api/posts/admin
+// @desc    add admin post
+// @access  Private (ony precedent or higher)
+router.put(
+  "/one",
+  auth,
+  [
+    check("title", "Please add title").isString(),
+    check("imageObj", "Please include an image").optional().isString(),
+    check("eventBody", "Please write someting about the event").isString(),
+    check("isPublic", "Please include post visibility").isBoolean(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+    } else {
+      try {
+        let { slug, postId } = req.query;
+        let postObjId = mongoose.Types.ObjectId(postId);
+        function matchQuery() {
+          if (slug) {
+            return {
+              slug: slug,
+            };
+          }
+          if (postId) {
+            return {
+              _id: postObjId,
+            };
+          } else {
+          }
+        }
+        const post = await Event.aggregate()
+          .lookup({
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userlist",
+          })
+          .match(matchQuery())
+          .project({
+            "userlist.password": 0,
+            "userlist.email": 0,
+            clubId: 0,
+            userId: 0,
+          })
+          .limit(1);
+        //check post by id
+        const mainPost = await Event.findById(post[0]._id);
+        //can be checked with == but for security used === and JSON.stringgify
+        //checking userid mathced with original post creator
+        if (
+          JSON.stringify(post[0].userlist[0]._id) ===
+          JSON.stringify(req.user.id)
+        ) {
+          mainPost.title = req.body.title;
+          mainPost.eventBody = req.body.eventBody;
+          mainPost.location = req.body.location;
+          mainPost.fee = req.body.fee;
+          mainPost.tickets = req.body.tickets;
+          mainPost.startTime = req.body.startTime;
+          mainPost.endTime = req.body.endTime;
+          mainPost.eventDate = req.body.eventDate;
+          mainPost.email = req.body.email;
+          mainPost.contactNumber = req.body.contactNumber;
+          mainPost.isPublic = req.body.isPublic;
+
+          if (req.body.imageObj) {
+            const tempPublicId = mainPost.imageObj.public_id;
+            const imageObj = await cloudinary.uploader.upload(
+              req.body.imageObj,
+              {
+                upload_preset: "posts",
+              }
+            );
+            mainPost.imageObj = imageObj;
+            const result = await cloudinary.uploader.rename(
+              tempPublicId,
+              `deleted/${tempPublicId}`,
+              (options = {})
+            );
+          }
+          await mainPost.save();
+          res.status(200).send(mainPost);
+        } else {
+          res.status(500).send({
+            success: false,
+            masssage: "You dont have permisson to Edit this post",
+          });
+        }
+      } catch (err) {
+        console.error(err.message);
+        res.status(500).send({ success: false, masssage: "no posts" });
+      }
+    }
+  }
+);
 // @route   DELETE api/events/one
 // @desc    delete one event
 // @access  Private
