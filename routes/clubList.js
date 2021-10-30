@@ -1,36 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const ClubList = require('../models/ClubList')
+const ClubList = require("../models/ClubList");
 const auth = require("../middleware/auth");
 
 // @route   GET api/clublist
 // @desc    get all clublist
 // @access  Public
 router.get("/", async (req, res) => {
+  try {
     const club = await ClubList.find();
     if (club) {
       res.status(200).send(club);
-    }
-    else {
+    } else {
       res.status(400).send({ success: false, masssage: "clubs not found" });
     }
-  
-  });
+  } catch (err) {
+    console.log(err);
+  }
+});
 
 // @route   POST api/clublist
 // @desc    get all clublist
 // @access  Private
-router.post("/",auth,async (req, res) => {
-
-    let club = new ClubList({
-        name: req.body.name,
-
-      });
-      club = await club.save();
-      if (!club) {
-        res.status(500).send({ success: false , message: 'The club cannot be created'  })
-      }
-      res.send( { success: true ,message:"club added "  });
+router.post("/", auth, async (req, res) => {
+  let club = new ClubList({
+    name: req.body.name,
+  });
+  club = await club.save();
+  if (!club) {
+    res
+      .status(500)
+      .send({ success: false, message: "The club cannot be created" });
+  }
+  res.send({ success: true, message: "club added " });
 });
 
 // @route   PUT api/clublist
