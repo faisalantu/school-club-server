@@ -20,6 +20,7 @@ app.get("/", (req, res) => {
 //api routes here
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/posts", require("./routes/posts"));
+app.use("/api/likepost", require("./routes/likePost"));
 app.use("/api/events", require("./routes/events"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/clublist", require("./routes/clubList"));
