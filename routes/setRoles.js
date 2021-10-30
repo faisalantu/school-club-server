@@ -3,23 +3,24 @@ const router = express.Router();
 const role = require("../models/Role");
 const Club = require("../models/ClubList");
 const User = require("../models/User");
-const auth = require("../middleware/adminAuth");
+const adminAuth = require("../middleware/adminAuth");
 const { check, validationResult } = require("express-validator");
 
 // @route   GET api/role
 // @desc    get all role
 // @access  Public
-router.get("/", auth, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const precedent = await Club.find({
       precedent: { $exists: true, $ne: null },
     })
       .populate("precedent", "_id firstname lastname imageObj")
-      .select("precedent name");
+      .select("precedent name slug");
     const memberWithRoles = await User.find({
       "roles.0": { $exists: true, $ne: null },
     })
       .populate("roles", "name _id")
+      .populate("rolesOf", "name slug _id")
       .select("roles _id firstname lastname imageObj");
     res.status(200).send({ memberWithRoles, precedent });
   } catch (error) {
@@ -42,7 +43,7 @@ router.get("/", auth, async (req, res) => {
 // @access  Private
 router.put(
   "/",
-  auth,
+  adminAuth,
   [
     check("userId", "Please add userId").not().isEmpty(),
     check("precedent", "Please include precedent").not().isEmpty(),
