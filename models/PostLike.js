@@ -16,8 +16,12 @@ const PostLikeSchema = mongoose.Schema({
   },
   active: {
     type: Boolean,
-    default: false,
+    default: true,
   },
+  postType:{
+    type: String,
+    required: false
+  }
 });
 
 module.exports = mongoose.model("PostLike", PostLikeSchema);
