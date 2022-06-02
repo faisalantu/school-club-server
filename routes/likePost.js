@@ -11,7 +11,19 @@ const c = require("config");
 // @desc    get all role
 // @access  Public
 router.get("/", auth, async (req, res) => {
-  res.send({ success: true, message: "success :)" });
+  try {
+    let { postId } = req.query;
+    const postLike = await PostLikeModel.find({ postId: postId });
+    const isLiked = await PostLikeModel.find({
+      postId: postId,
+      uid: req.user.id,
+    });
+    console.log(isLiked.length?true:false);
+    res.send({ success: true, message: { likes: postLike.length,isActive:isLiked.length?true:false } });
+  } catch (err) {
+    console.log(err);
+    res.send({ success: false, message: "not success :)" });
+  }
 });
 
 // @route   POST api/role
